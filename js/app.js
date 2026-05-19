@@ -297,21 +297,27 @@ const GUIDE_DATA = {
     usages: [
       {
         label: 'Uso diario / Urbano',
-        desc:  'Traslados diarios, scooters y motos de baja cilindrada.',
-        rec:   [10],
-        tip:   'El 10W-40 es el más versátil para uso urbano.'
+        desc:  'Traslados diarios, scooters y motos de uso general.',
+        rec:   [10, 11],
+        tip:   'RÖD 10W-40 es el más versátil. El 20W-50 mineral es ideal para climas cálidos o motos de mayor cilindrada.'
       },
       {
-        label: 'Alta cilindrada / Climas cálidos',
-        desc:  'Motos +400cc o temperaturas sobre 30°C.',
-        rec:   [11],
-        tip:   'El 20W-50 protege mejor en alta temperatura y cilindrada.'
+        label: 'Scooters / Baja cilindrada',
+        desc:  'Motos modernas, scooters y motores pequeños.',
+        rec:   [12],
+        tip:   'RÖD 10W-30 semi-sintético fluye mejor en arranques en frío y es ideal para motores de baja cilindrada.'
       },
       {
         label: 'Deportivo / Alto rendimiento',
-        desc:  'Motos sport, naked, adventure. Uso intensivo.',
-        rec:   [12],
-        tip:   'El sintético 5W-40 brinda máxima protección en uso exigente.'
+        desc:  'Motos sport, supersport, naked de alta cilindrada.',
+        rec:   [13],
+        tip:   'RÖD 10W-50 sintético brinda máxima protección en uso exigente, altas RPM y temperatura extrema.'
+      },
+      {
+        label: 'Motores 2 Tiempos',
+        desc:  'Motos 2T, karts, motosierras y equipos de jardín.',
+        rec:   [14],
+        tip:   'RÖD 2T semi-sintético es formulación específica para motores 2T: baja emisión de humo y alta lubricidad.'
       }
     ]
   },

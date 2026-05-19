@@ -3,7 +3,7 @@
 const CGS = (() => {
   const STORAGE_KEY   = 'cgs_products_v1';
   const VERSION_KEY   = 'cgs_data_version';
-  const DATA_VERSION  = '1.1.0'; // incrementar cuando cambien los datos de DEFAULTS
+  const DATA_VERSION  = '1.2.0'; // incrementar cuando cambien los datos de DEFAULTS
 
   const DEFAULTS = [
     {
@@ -145,49 +145,94 @@ const CGS = (() => {
       id: 10,
       name: "YPF RÖD 4T 10W-40",
       category: "moto",
-      technology: "Mineral",
-      description: "Lubricante mineral de alta calidad para motores 4 tiempos de motocicletas. Cumple con las especificaciones JASO MA2 asegurando perfecta compatibilidad con el embrague húmedo. Protección total en ciudad.",
+      technology: "Semi-Sintético",
+      description: "Lubricante semi-sintético para motores 4 tiempos de motocicletas. La viscosidad 10W-40 lo convierte en el más versátil de la línea RÖD, ideal para uso urbano y de ruta. Certificado JASO MA2 para perfecta compatibilidad con embrague húmedo.",
       specs: "API SL • JASO MA2",
       viscosity: "10W-40",
       presentations: ["1L", "4L"],
-      applications: ["Motos 4T", "Scooters", "Naked", "Sport"],
+      applications: ["Motos 4T", "Scooters", "Naked", "Sport", "Uso urbano"],
       vehicleType: "moto",
-      image: "./assets/products/Elaion_TS1040.webp",
+      image: "./assets/products/rod-4t-10w40.webp",
       featured: true,
-      badge: null
+      badge: "MÁS RECOMENDADO"
     },
     {
       id: 11,
       name: "YPF RÖD 4T 20W-50",
       category: "moto",
       technology: "Mineral",
-      description: "Formulado para motos de mayor cilindrada o climas cálidos. Mayor viscosidad para protección óptima en condiciones de alta temperatura. Compatibilidad total con embrague húmedo.",
+      description: "Lubricante mineral para motocicletas de alta cilindrada o en climas cálidos. La mayor viscosidad 20W-50 brinda protección óptima en condiciones de alta temperatura y uso intensivo. Compatible con embrague húmedo.",
       specs: "API SL • JASO MA2",
       viscosity: "20W-50",
       presentations: ["1L", "4L"],
-      applications: ["Motos grandes cilindradas", "Climas cálidos", "Uso intensivo"],
+      applications: ["Motos de alta cilindrada", "Climas cálidos", "Uso intensivo"],
       vehicleType: "moto",
-      image: "./assets/products/Elaion_MI2050.webp",
+      image: "./assets/products/rod-4t-20w50.webp",
       featured: false,
       badge: null
     },
     {
       id: 12,
-      name: "YPF RÖD 4T 5W-40",
+      name: "YPF RÖD 4T 10W-30",
+      category: "moto",
+      technology: "Semi-Sintético",
+      description: "Lubricante semi-sintético de menor viscosidad para motos modernas y scooters de baja cilindrada. Fluye con facilidad en arranques en frío y mantiene excelente protección a temperatura de operación.",
+      specs: "API SL • JASO MA2",
+      viscosity: "10W-30",
+      presentations: ["1L", "4L"],
+      applications: ["Scooters", "Motos de baja cilindrada", "Motos modernas"],
+      vehicleType: "moto",
+      image: "./assets/products/rod-4t-10w30.webp",
+      featured: false,
+      badge: null
+    },
+    {
+      id: 13,
+      name: "YPF RÖD 4T 10W-50",
       category: "moto",
       technology: "Sintético",
-      description: "Lubricante 100% sintético para motocicletas de alta performance. Protección superior en arranques en frío y a altas temperaturas. Ideal para motos deportivas y de uso intensivo.",
+      description: "Lubricante 100% sintético de máxima performance para motocicletas de alto rendimiento. La formulación sintética 10W-50 ofrece protección superior en uso deportivo, altas RPM y temperatura extrema.",
       specs: "API SN • JASO MA2",
-      viscosity: "5W-40",
+      viscosity: "10W-50",
       presentations: ["1L", "4L"],
-      applications: ["Motos deportivas", "Supersport", "Naked", "Adventure"],
+      applications: ["Motos deportivas", "Supersport", "Alto rendimiento", "Circuito"],
       vehicleType: "moto",
-      image: "./assets/products/Elaion_FS540.webp",
+      image: "./assets/products/rod-4t-10w50.webp",
       featured: false,
       badge: "SINTÉTICO"
     },
     {
-      id: 13,
+      id: 14,
+      name: "YPF RÖD 2T",
+      category: "moto",
+      technology: "Semi-Sintético",
+      description: "Lubricante semi-sintético específico para motores 2 tiempos de moto. Formulación de baja emisión de humo y alta lubricidad. Protege el motor y reduce el depósito de carbonilla en válvulas y pistones.",
+      specs: "API TC • JASO FC",
+      viscosity: "2T",
+      presentations: ["1L", "4L"],
+      applications: ["Motos 2T", "Karts", "Motosierras", "Equipos de jardín"],
+      vehicleType: "moto",
+      image: "./assets/products/rod-2t.webp",
+      featured: false,
+      badge: null
+    },
+    {
+      id: 15,
+      name: "YPF RÖD CADENAS",
+      category: "moto",
+      technology: "Aerosol",
+      description: "Lubricante en aerosol para cadenas de motocicletas. Penetra entre los eslabones protegiéndolos de la oxidación y reduciendo el desgaste. Alta adherencia para mantenerse en la cadena incluso en condiciones húmedas.",
+      specs: "NLGI 00",
+      viscosity: "N/A",
+      presentations: ["300ml"],
+      applications: ["Cadenas de moto", "Transmisiones", "Cadenas de bicicleta"],
+      vehicleType: "moto",
+      image: "./assets/products/rod-cadenas.webp",
+      featured: false,
+      badge: null
+    },
+    {
+      id: 16,
       name: "KRIOX Refrigerante Rojo",
       category: "otros",
       technology: "Pre-diluido",
@@ -202,7 +247,7 @@ const CGS = (() => {
       badge: null
     },
     {
-      id: 14,
+      id: 17,
       name: "Líquido de Frenos DOT 4",
       category: "otros",
       technology: "Fluido hidráulico",
@@ -217,7 +262,7 @@ const CGS = (() => {
       badge: null
     },
     {
-      id: 15,
+      id: 18,
       name: "Grasa EP2 Multipropósito",
       category: "otros",
       technology: "Grasa",
@@ -232,7 +277,7 @@ const CGS = (() => {
       badge: null
     },
     {
-      id: 16,
+      id: 19,
       name: "Hidráulico AW 68",
       category: "otros",
       technology: "Mineral",
@@ -326,7 +371,7 @@ const CGS = (() => {
     all:       { label: 'Todos los Productos', color: '#003087' },
     elaion:    { label: 'ELAION',              color: '#003087' },
     extravida: { label: 'EXTRAVIDA',           color: '#001B4D' },
-    moto:      { label: 'ELAION MOTO',         color: '#1565C0' },
+    moto:      { label: 'RÖD',                  color: '#1565C0' },
     otros:     { label: 'Otros Productos',     color: '#37474F' }
   };
 
