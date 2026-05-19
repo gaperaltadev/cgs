@@ -8,11 +8,14 @@ const DEFAULT_WA_CFG   = { waNumber: '595994443113', waMessage: 'Hola CGS, quisi
 const DEFAULT_CREDS = { username: 'admin', password: 'cgs2024' };
 
 /* ─── Init ───────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  CGS.init();
+document.addEventListener('DOMContentLoaded', async () => {
+  await CGS.init();
   initAdminCreds();
 
-  if (isLoggedIn()) {
+  // If Supabase is configured, check for an active session
+  const session = await CGS.getSession();
+  if (session || isLoggedIn()) {
+    if (session) sessionStorage.setItem(ADMIN_SESSION, 'true');
     showDashboard();
   } else {
     showLogin();
@@ -52,13 +55,30 @@ function showDashboard() {
 function setupLoginForm() {
   const form = document.getElementById('login-form');
   if (!form) return;
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     const username = document.getElementById('login-user').value.trim();
     const password = document.getElementById('login-pass').value;
-    const creds    = JSON.parse(localStorage.getItem(ADMIN_CREDS_KEY) || '{}');
     const errEl    = document.getElementById('login-error');
 
+    // Try Supabase auth first (when configured)
+    const supaResult = await CGS.signIn(username, password);
+    if (supaResult === true) {
+      sessionStorage.setItem(ADMIN_SESSION, 'true');
+      errEl.textContent = '';
+      await CGS.init();
+      showDashboard();
+      return;
+    }
+    if (supaResult === false) {
+      // Supabase is configured but credentials are wrong
+      errEl.textContent = 'Usuario o contraseña incorrectos.';
+      document.getElementById('login-pass').value = '';
+      return;
+    }
+
+    // supaResult === null: Supabase not configured — use local credentials
+    const creds = JSON.parse(localStorage.getItem(ADMIN_CREDS_KEY) || '{}');
     if (username === creds.username && password === creds.password) {
       sessionStorage.setItem(ADMIN_SESSION, 'true');
       errEl.textContent = '';
@@ -73,7 +93,8 @@ function setupLoginForm() {
 function setupLogout() {
   const btn = document.getElementById('logout-btn');
   if (!btn) return;
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', async () => {
+    await CGS.signOut();
     sessionStorage.removeItem(ADMIN_SESSION);
     showLogin();
   });
@@ -221,12 +242,14 @@ function previewImage() {
   preview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.parentElement.innerHTML='<span class=preview-error>URL de imagen no válida</span>'" style="max-height:120px;border-radius:8px;margin-top:8px;">`;
 }
 
-function handleFormSubmit(e) {
+async function handleFormSubmit(e) {
   e.preventDefault();
-  const errEl = document.getElementById('form-error');
-  const name  = document.getElementById('form-name').value.trim();
+  const errEl   = document.getElementById('form-error');
+  const saveBtn = document.querySelector('.form-modal-footer .btn-save');
+  const name    = document.getElementById('form-name').value.trim();
   if (!name) { errEl.textContent = 'El nombre es obligatorio.'; return; }
   errEl.textContent = '';
+  if (saveBtn) saveBtn.disabled = true;
 
   const data = {
     name:          name,
@@ -245,13 +268,14 @@ function handleFormSubmit(e) {
 
   const id = document.getElementById('form-id').value;
   if (id) {
-    CGS.update(id, data);
+    await CGS.update(id, data);
     showToast('Producto actualizado correctamente.');
   } else {
-    CGS.add(data);
+    await CGS.add(data);
     showToast('Producto agregado correctamente.');
   }
 
+  if (saveBtn) saveBtn.disabled = false;
   closeProductModal();
   renderStats();
   renderProductTable();
@@ -265,8 +289,8 @@ function confirmDelete(id, name) {
   msg.textContent = `¿Eliminar el producto "${name}"? Esta acción no se puede deshacer.`;
   dlg.classList.remove('hidden');
 
-  document.getElementById('confirm-yes').onclick = () => {
-    CGS.remove(id);
+  document.getElementById('confirm-yes').onclick = async () => {
+    await CGS.remove(id);
     dlg.classList.add('hidden');
     renderStats();
     renderProductTable();
@@ -279,9 +303,9 @@ function confirmDelete(id, name) {
 
 /* ─── Reset defaults ─────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('reset-btn')?.addEventListener('click', () => {
+  document.getElementById('reset-btn')?.addEventListener('click', async () => {
     if (confirm('¿Restaurar todos los productos a los valores predeterminados? Se perderán los cambios.')) {
-      CGS.reset();
+      await CGS.reset();
       renderStats();
       renderProductTable();
       showToast('Catálogo restaurado a los valores predeterminados.');

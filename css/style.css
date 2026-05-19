@@ -89,7 +89,9 @@ input, textarea, select { font-family: var(--font); }
 #site-header .container { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 
 .logo { display: flex; align-items: center; gap: 12px; }
-.logo-ypf { display: inline-flex; align-items: center; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.4); color: #fff; padding: 6px 10px; border-radius: var(--r-sm); line-height: 0; }
+.logo-ypf { display: inline-flex; align-items: center; }
+.logo-ypf img { height: 18px; width: auto; display: block; filter: brightness(0) invert(1); }
+.login-logo .logo-ypf img { filter: none; }
 .logo-text { display: flex; flex-direction: column; line-height: 1.2; }
 .logo-cgs { font-weight: 800; font-size: 1.2rem; color: #fff; letter-spacing: .05em; }
 .logo-sub { font-size: .7rem; color: rgba(255,255,255,.65); letter-spacing: .04em; text-transform: uppercase; }

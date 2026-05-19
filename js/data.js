@@ -1,10 +1,87 @@
 'use strict';
 
 const CGS = (() => {
-  const STORAGE_KEY   = 'cgs_products_v1';
-  const VERSION_KEY   = 'cgs_data_version';
-  const DATA_VERSION  = '1.2.0'; // incrementar cuando cambien los datos de DEFAULTS
+  const STORAGE_KEY  = 'cgs_products_v1';
+  const VERSION_KEY  = 'cgs_data_version';
+  const DATA_VERSION = '1.2.0';
 
+  /* ── Supabase ──────────────────────────────────────────────────────
+   * 1. Crear proyecto en https://supabase.com
+   * 2. Ejecutar supabase_schema.sql en el SQL Editor de Supabase
+   * 3. Pegar las claves de Settings > API aquí:
+   * ────────────────────────────────────────────────────────────────── */
+  const SUPABASE_URL  = '';   // ej: https://xyzabcde.supabase.co
+  const SUPABASE_ANON = '';   // ej: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+  const _db = (SUPABASE_URL && SUPABASE_ANON && typeof window.supabase !== 'undefined')
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+    : null;
+
+  /* ── Row mapping ───────────────────────────────────────────────── */
+  function _fromRow(r) {
+    return {
+      id:            r.id,
+      name:          r.name,
+      category:      r.category,
+      technology:    r.technology   || '',
+      description:   r.description || '',
+      specs:         r.specs        || '',
+      viscosity:     r.viscosity    || 'N/A',
+      presentations: Array.isArray(r.presentations) ? r.presentations : [],
+      applications:  Array.isArray(r.applications)  ? r.applications  : [],
+      vehicleType:   r.vehicle_type || 'auto',
+      image:         r.image        || null,
+      featured:      r.featured     || false,
+      badge:         r.badge        || null
+    };
+  }
+
+  function _toRow(p) {
+    return {
+      name:          p.name,
+      category:      p.category,
+      technology:    p.technology   || '',
+      description:   p.description || '',
+      specs:         p.specs        || '',
+      viscosity:     p.viscosity    || 'N/A',
+      presentations: Array.isArray(p.presentations) ? p.presentations : [],
+      applications:  Array.isArray(p.applications)  ? p.applications  : [],
+      vehicle_type:  p.vehicleType  || 'auto',
+      image:         p.image        || null,
+      featured:      p.featured     || false,
+      badge:         p.badge        || null,
+      sort_order:    p.id           || 0
+    };
+  }
+
+  /* ── Normalize form input ──────────────────────────────────────── */
+  function _normalize(product) {
+    const p = { ...product };
+    if (!Array.isArray(p.presentations)) {
+      p.presentations = p.presentations
+        ? p.presentations.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+    if (!Array.isArray(p.applications)) {
+      p.applications = p.applications
+        ? p.applications.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+    return p;
+  }
+
+  /* ── Refresh localStorage from Supabase ────────────────────────── */
+  async function _syncFromDB() {
+    const { data, error } = await _db
+      .from('products')
+      .select('*')
+      .order('sort_order')
+      .order('id');
+    if (!error && data) {
+      _saveLocal(data.map(_fromRow));
+      localStorage.setItem(VERSION_KEY, DATA_VERSION);
+    }
+  }
+
+  /* ── Defaults ──────────────────────────────────────────────────── */
   const DEFAULTS = [
     {
       id: 1,
@@ -293,20 +370,43 @@ const CGS = (() => {
     }
   ];
 
-  function init() {
-    const versionMismatch = localStorage.getItem(VERSION_KEY) !== DATA_VERSION;
-    const noData = !localStorage.getItem(STORAGE_KEY);
-    if (versionMismatch || noData) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULTS));
+  /* ── Init (async: fetch from Supabase or fall back to DEFAULTS) ── */
+  async function init() {
+    if (_db) {
+      try {
+        await _syncFromDB();
+        return;
+      } catch (_) { /* sin conexión — continuar con local */ }
+    }
+    if (localStorage.getItem(VERSION_KEY) !== DATA_VERSION || !localStorage.getItem(STORAGE_KEY)) {
+      _saveLocal(DEFAULTS);
       localStorage.setItem(VERSION_KEY, DATA_VERSION);
     }
   }
 
+  /* ── Auth helpers (used by admin.js) ───────────────────────────── */
+  async function signIn(email, password) {
+    if (!_db) return null; // null = use local auth fallback
+    const { error } = await _db.auth.signInWithPassword({ email, password });
+    return !error;
+  }
+
+  async function signOut() {
+    if (_db) await _db.auth.signOut();
+  }
+
+  async function getSession() {
+    if (!_db) return null;
+    const { data } = await _db.auth.getSession();
+    return data.session;
+  }
+
+  /* ── Read ───────────────────────────────────────────────────────── */
   function getAll() {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     } catch {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULTS));
+      _saveLocal(DEFAULTS);
       localStorage.setItem(VERSION_KEY, DATA_VERSION);
       return DEFAULTS.slice();
     }
@@ -316,64 +416,75 @@ const CGS = (() => {
     return getAll().find(p => p.id === Number(id));
   }
 
-  function _save(products) {
+  function _saveLocal(products) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
   }
 
-  function add(product) {
+  /* ── Write ──────────────────────────────────────────────────────── */
+  async function add(product) {
     const products = getAll();
-    const id = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-    const newProduct = { ...product, id };
-    if (!Array.isArray(newProduct.presentations)) {
-      newProduct.presentations = newProduct.presentations
-        ? newProduct.presentations.split(',').map(s => s.trim()).filter(Boolean)
-        : [];
+    const nextId   = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+    const newProd  = { ..._normalize(product), id: nextId };
+
+    if (_db) {
+      const { data, error } = await _db
+        .from('products')
+        .insert(_toRow(newProd))
+        .select()
+        .single();
+      if (!error && data) newProd.id = data.id;
+      await _syncFromDB();
+      return newProd;
     }
-    if (!Array.isArray(newProduct.applications)) {
-      newProduct.applications = newProduct.applications
-        ? newProduct.applications.split(',').map(s => s.trim()).filter(Boolean)
-        : [];
-    }
-    products.push(newProduct);
-    _save(products);
-    return newProduct;
+
+    products.push(newProd);
+    _saveLocal(products);
+    return newProd;
   }
 
-  function update(id, data) {
+  async function update(id, data) {
     const products = getAll();
-    const idx = products.findIndex(p => p.id === Number(id));
+    const idx      = products.findIndex(p => p.id === Number(id));
     if (idx === -1) return null;
-    const updated = { ...products[idx], ...data, id: Number(id) };
-    if (!Array.isArray(updated.presentations)) {
-      updated.presentations = updated.presentations
-        ? updated.presentations.split(',').map(s => s.trim()).filter(Boolean)
-        : [];
+    const updated  = { ..._normalize({ ...products[idx], ...data }), id: Number(id) };
+
+    if (_db) {
+      await _db.from('products').update(_toRow(updated)).eq('id', Number(id));
+      await _syncFromDB();
+      return updated;
     }
-    if (!Array.isArray(updated.applications)) {
-      updated.applications = updated.applications
-        ? updated.applications.split(',').map(s => s.trim()).filter(Boolean)
-        : [];
-    }
+
     products[idx] = updated;
-    _save(products);
+    _saveLocal(products);
     return updated;
   }
 
-  function remove(id) {
-    _save(getAll().filter(p => p.id !== Number(id)));
+  async function remove(id) {
+    if (_db) {
+      await _db.from('products').delete().eq('id', Number(id));
+      await _syncFromDB();
+      return;
+    }
+    _saveLocal(getAll().filter(p => p.id !== Number(id)));
   }
 
-  function reset() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULTS));
+  async function reset() {
+    if (_db) {
+      await _db.from('products').delete().neq('id', 0);
+      await _db.from('products').insert(DEFAULTS.map(_toRow));
+      await _syncFromDB();
+      return;
+    }
+    _saveLocal(DEFAULTS);
   }
 
   const CATEGORIES = {
     all:       { label: 'Todos los Productos', color: '#003087' },
     elaion:    { label: 'ELAION',              color: '#003087' },
     extravida: { label: 'EXTRAVIDA',           color: '#001B4D' },
-    moto:      { label: 'RÖD',                  color: '#1565C0' },
+    moto:      { label: 'RÖD',                 color: '#1565C0' },
     otros:     { label: 'Otros Productos',     color: '#37474F' }
   };
 
-  return { init, getAll, getById, add, update, remove, reset, DEFAULTS, CATEGORIES };
+  return { init, getAll, getById, add, update, remove, reset, signIn, signOut, getSession, DEFAULTS, CATEGORIES };
 })();

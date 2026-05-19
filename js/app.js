@@ -6,8 +6,8 @@ let searchQuery    = '';
 let currentProduct = null;
 
 /* ─── Init ───────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  CGS.init();
+document.addEventListener('DOMContentLoaded', async () => {
+  await CGS.init();
   setupHeader();
   setupMobileMenu();
   setupCategoryTabs();
