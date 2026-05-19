@@ -195,8 +195,9 @@ function openModal(id) {
   const pres  = Array.isArray(p.presentations) ? p.presentations : [];
   const apps  = Array.isArray(p.applications)  ? p.applications  : [];
 
+  const imgBg = `linear-gradient(160deg, ${bg}18 0%, ${bg}08 100%)`;
   const imgSection = p.image
-    ? `<img src="${p.image}" alt="${p.name}" class="modal-img">`
+    ? `<img src="${p.image}" alt="${p.name}" class="modal-img" style="background:${imgBg}">`
     : `<div class="modal-placeholder" style="background:linear-gradient(135deg,${bg} 0%,${bg}99 100%)">
          <div class="modal-placeholder-text" style="color:${acc}">${label}</div>
          <div class="modal-placeholder-visc">${p.viscosity !== 'N/A' ? p.viscosity : p.technology}</div>
@@ -205,8 +206,10 @@ function openModal(id) {
   content.innerHTML = `
     <div class="modal-image-wrap">${imgSection}</div>
     <div class="modal-info">
-      <div class="modal-category" style="background:${bg}">${label}</div>
-      ${p.badge ? `<span class="modal-badge">${p.badge}</span>` : ''}
+      <div class="modal-header-meta">
+        <div class="modal-category" style="background:${bg}">${label}</div>
+        ${p.badge ? `<span class="modal-badge">${p.badge}</span>` : ''}
+      </div>
       <h2 class="modal-title">${p.name}</h2>
       <p class="modal-tech">${p.technology} • SAE ${p.viscosity}</p>
       <p class="modal-desc">${p.description}</p>
@@ -375,11 +378,15 @@ function renderGuideResult(usage) {
     const bg  = getCategoryColor(p.category);
     const acc = getCategoryAccent(p.category);
     const label = CGS.CATEGORIES[p.category]?.label || p.category;
+    const guideImgHTML = p.image
+      ? `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;padding:6px;">`
+      : `<span style="color:${acc};font-size:.65rem;font-weight:800;text-align:center;line-height:1.2;">${label}</span>
+         <small style="color:${acc};opacity:.8;font-size:.6rem;">${p.viscosity !== 'N/A' ? p.viscosity : ''}</small>`;
+    const guideBg = p.image ? 'background:var(--gray-50)' : `background:linear-gradient(135deg,${bg} 0%,${bg}99 100%)`;
     return `
       <div class="guide-product-card">
-        <div class="guide-product-img" style="background:linear-gradient(135deg,${bg} 0%,${bg}99 100%)">
-          <span style="color:${acc}">${label}</span>
-          <small>${p.viscosity !== 'N/A' ? p.viscosity : ''}</small>
+        <div class="guide-product-img" style="${guideBg}">
+          ${guideImgHTML}
         </div>
         <div class="guide-product-info">
           <strong>${p.name}</strong>
