@@ -1,0 +1,174 @@
+{
+  "name": "CGS — Nuevo Producto → Redes Sociales",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cgs-producto-nuevo",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Supabase Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "cgs-producto-nuevo"
+    },
+    {
+      "parameters": {
+        "jsCode": "const record = $input.first().json.record;\n\nconst category_hashtags = {\n  elaion:    '#ELAION #Nafta #Diesel',\n  extravida: '#EXTRAVIDA #CargaPesada #Flotas',\n  moto:      '#ROD #Motos #Motocicletas',\n  otros:     '#Lubricantes #Automotor'\n};\n\nconst category_emoji = {\n  elaion:    '🚗',\n  extravida: '🚛',\n  moto:      '🏍️',\n  otros:     '🔧'\n};\n\nconst hashtags = category_hashtags[record.category] || '#Lubricantes';\nconst emoji    = category_emoji[record.category] || '🔧';\n\nconst description = (record.description || '').substring(0, 200);\nconst presentations = Array.isArray(record.presentations)\n  ? record.presentations.join(' • ')\n  : (record.presentations || '');\n\nconst post_text = `🆕 Nuevo en catálogo CGS Paraguay\n\n${emoji} ${record.name}\n${record.technology} • ${record.viscosity || ''}\n\n${description}${description.length === 200 ? '...' : ''}\n\n✅ ${record.specs || ''}\n📦 Presentaciones: ${presentations}\n\n📞 Consultá por WhatsApp: wa.me/595994443113\n🌐 Ver catálogo: cgs-paraguay.netlify.app\n\n#CGSParaguay #YPF ${hashtags}`;\n\nreturn [{\n  json: {\n    name:       record.name,\n    image_url:  record.image ? `https://cgs-paraguay.netlify.app/${record.image.replace('./', '')}` : null,\n    post_text:  post_text,\n    category:   record.category,\n    is_featured: record.featured || false\n  }\n}];"
+      },
+      "id": "format-post",
+      "name": "Formatear Post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "has-image",
+              "leftValue": "={{ $json.image_url }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-image",
+      "name": "¿Tiene imagen?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $vars.FACEBOOK_PAGE_ID }}/photos",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "url",          "value": "={{ $json.image_url }}" },
+            { "name": "caption",      "value": "={{ $json.post_text }}" },
+            { "name": "access_token", "value": "={{ $vars.META_ACCESS_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "facebook-photo",
+      "name": "Facebook — Post con Imagen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $vars.FACEBOOK_PAGE_ID }}/feed",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "message",      "value": "={{ $json.post_text }}" },
+            { "name": "access_token", "value": "={{ $vars.META_ACCESS_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "facebook-text",
+      "name": "Facebook — Post de Texto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $vars.INSTAGRAM_ACCOUNT_ID }}/media",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "image_url",    "value": "={{ $('Formatear Post').first().json.image_url }}" },
+            { "name": "caption",      "value": "={{ $('Formatear Post').first().json.post_text }}" },
+            { "name": "access_token", "value": "={{ $vars.META_ACCESS_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "instagram-container",
+      "name": "Instagram — Crear Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "id": "wait-ig",
+      "name": "Esperar 10s (Instagram)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $vars.INSTAGRAM_ACCOUNT_ID }}/media_publish",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "creation_id",  "value": "={{ $json.id }}" },
+            { "name": "access_token", "value": "={{ $vars.META_ACCESS_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "instagram-publish",
+      "name": "Instagram — Publicar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1560, 200]
+    }
+  ],
+  "connections": {
+    "Supabase Webhook": {
+      "main": [[ { "node": "Formatear Post", "type": "main", "index": 0 } ]]
+    },
+    "Formatear Post": {
+      "main": [[ { "node": "¿Tiene imagen?", "type": "main", "index": 0 } ]]
+    },
+    "¿Tiene imagen?": {
+      "main": [
+        [ { "node": "Facebook — Post con Imagen", "type": "main", "index": 0 } ],
+        [ { "node": "Facebook — Post de Texto",   "type": "main", "index": 0 } ]
+      ]
+    },
+    "Facebook — Post con Imagen": {
+      "main": [[ { "node": "Instagram — Crear Container", "type": "main", "index": 0 } ]]
+    },
+    "Instagram — Crear Container": {
+      "main": [[ { "node": "Esperar 10s (Instagram)", "type": "main", "index": 0 } ]]
+    },
+    "Esperar 10s (Instagram)": {
+      "main": [[ { "node": "Instagram — Publicar", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "pinData": {},
+  "versionId": "1",
+  "triggerCount": 1,
+  "tags": [{ "name": "CGS Paraguay" }]
+}

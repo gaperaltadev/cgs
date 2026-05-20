@@ -1,0 +1,152 @@
+{
+  "name": "CGS — Post Semanal Productos Destacados",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [1],
+              "triggerAtHour": 10,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "cron-semanal",
+      "name": "Cron — Lunes 10:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $vars.SUPABASE_URL }}/rest/v1/products",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "featured", "value": "eq.true" },
+            { "name": "order",    "value": "sort_order.asc" },
+            { "name": "limit",    "value": "4" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "={{ $vars.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $vars.SUPABASE_SERVICE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-featured",
+      "name": "Obtener Productos Destacados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const products = $input.first().json;\n\nif (!products || products.length === 0) {\n  return [{ json: { skip: true, post_text: '' } }];\n}\n\nconst lines = products.map(p => {\n  const emoji = { elaion: '🚗', extravida: '🚛', moto: '🏍️', otros: '🔧' }[p.category] || '🔧';\n  return `${emoji} ${p.name} — ${p.technology} ${p.viscosity || ''}`;\n}).join('\\n');\n\nconst post_text = `📋 Productos destacados de la semana — CGS Paraguay\n\n${lines}\n\n🏆 La línea YPF completa disponible para tu vehículo o flota.\n\n📞 WhatsApp: wa.me/595994443113\n🌐 cgs-paraguay.netlify.app\n\n#CGSParaguay #YPF #Lubricantes #Paraguay #Automotor`;\n\nreturn [{ json: { post_text, skip: false, products } }];"
+      },
+      "id": "format-weekly",
+      "name": "Formatear Post Semanal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "no-skip",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notEquals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-products",
+      "name": "¿Hay productos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $vars.FACEBOOK_PAGE_ID }}/feed",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "message",      "value": "={{ $json.post_text }}" },
+            { "name": "access_token", "value": "={{ $vars.META_ACCESS_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "facebook-weekly",
+      "name": "Facebook — Post Semanal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 220]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $vars.INSTAGRAM_ACCOUNT_ID }}/media",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "media_type",   "value": "REELS" },
+            { "name": "caption",      "value": "={{ $('Formatear Post Semanal').first().json.post_text }}" },
+            { "name": "access_token", "value": "={{ $vars.META_ACCESS_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "instagram-weekly",
+      "name": "Instagram — Post Semanal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 380]
+    }
+  ],
+  "connections": {
+    "Cron — Lunes 10:00": {
+      "main": [[ { "node": "Obtener Productos Destacados", "type": "main", "index": 0 } ]]
+    },
+    "Obtener Productos Destacados": {
+      "main": [[ { "node": "Formatear Post Semanal", "type": "main", "index": 0 } ]]
+    },
+    "Formatear Post Semanal": {
+      "main": [[ { "node": "¿Hay productos?", "type": "main", "index": 0 } ]]
+    },
+    "¿Hay productos?": {
+      "main": [
+        [
+          { "node": "Facebook — Post Semanal",  "type": "main", "index": 0 },
+          { "node": "Instagram — Post Semanal", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "pinData": {},
+  "versionId": "1",
+  "triggerCount": 1,
+  "tags": [{ "name": "CGS Paraguay" }]
+}
