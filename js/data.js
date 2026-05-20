@@ -10,8 +10,10 @@ const CGS = (() => {
    * 2. Ejecutar supabase_schema.sql en el SQL Editor de Supabase
    * 3. Pegar las claves de Settings > API aquí:
    * ────────────────────────────────────────────────────────────────── */
-  const SUPABASE_URL  = '';   // ej: https://xyzabcde.supabase.co
-  const SUPABASE_ANON = '';   // ej: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+  // Claves inyectadas por js/supabase-config.js (gitignoreado)
+  // En producción: generado por Netlify desde variables de entorno
+  const SUPABASE_URL  = window.SUPABASE_URL  || '';
+  const SUPABASE_ANON = window.SUPABASE_ANON || '';
 
   const _db = (SUPABASE_URL && SUPABASE_ANON && typeof window.supabase !== 'undefined')
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)

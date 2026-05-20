@@ -1,0 +1,7 @@
+[build]
+  # Genera js/supabase-config.js desde variables de entorno de Netlify
+  # Configurar en: Netlify dashboard > Site settings > Environment variables
+  #   SUPABASE_URL      = https://xxx.supabase.co
+  #   SUPABASE_ANON_KEY = eyJhbGci...
+  command = "echo \"window.SUPABASE_URL='$SUPABASE_URL'; window.SUPABASE_ANON='$SUPABASE_ANON_KEY';\" > js/supabase-config.js"
+  publish = "."

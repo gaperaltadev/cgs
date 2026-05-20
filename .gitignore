@@ -9,3 +9,6 @@ Thumbs.db
 # Internal tooling
 .claude/
 memory/
+
+# Credenciales — generado localmente y en Netlify build, nunca commitear
+js/supabase-config.js
