@@ -24,12 +24,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   await CGS.init();
   initAdminCreds();
 
-  // If Supabase is configured, check for an active session
+  // Si Supabase está configurado, la única forma válida de entrar es con
+  // una sesión activa de Supabase. Ignoramos sessionStorage stale.
+  // Si no hay Supabase, usamos el flag local (modo dev).
   const session = await CGS.getSession();
-  if (session || isLoggedIn()) {
-    if (session) sessionStorage.setItem(ADMIN_SESSION, 'true');
+  const supabaseConfigured = !!window.adminDb;
+
+  if (session) {
+    sessionStorage.setItem(ADMIN_SESSION, 'true');
+    showDashboard();
+  } else if (!supabaseConfigured && isLoggedIn()) {
+    // Solo permitir sesión local cuando Supabase NO está configurado
     showDashboard();
   } else {
+    // Limpiar cualquier flag stale antes de mostrar login
+    if (supabaseConfigured) sessionStorage.removeItem(ADMIN_SESSION);
     showLogin();
   }
 
@@ -83,20 +92,23 @@ function setupLoginForm() {
       return;
     }
     if (supaResult === false) {
-      // Supabase is configured but credentials are wrong
-      errEl.textContent = 'Usuario o contraseña incorrectos.';
+      // Supabase está configurado pero las credenciales no validan.
+      // No caemos al fallback local: si lo permitiéramos, el usuario entraría
+      // al dashboard sin JWT y las tablas nuevas le darían permission-denied.
+      errEl.textContent = 'Email o contraseña incorrectos.';
       document.getElementById('login-pass').value = '';
       return;
     }
 
-    // supaResult === null: Supabase not configured — use local credentials
+    // supaResult === null: Supabase no está configurado — fallback local
+    // (solo útil para desarrollo sin Supabase)
     const creds = JSON.parse(localStorage.getItem(ADMIN_CREDS_KEY) || '{}');
     if (username === creds.username && password === creds.password) {
       sessionStorage.setItem(ADMIN_SESSION, 'true');
       errEl.textContent = '';
       showDashboard();
     } else {
-      errEl.textContent = 'Usuario o contraseña incorrectos.';
+      errEl.textContent = 'Email o contraseña incorrectos.';
       document.getElementById('login-pass').value = '';
     }
   });
