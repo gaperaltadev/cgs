@@ -1,8 +1,23 @@
 # Arquitectura del Sistema — CGS Paraguay
 
-> Documento de referencia técnica. Versión 1.0 — Mayo 2026.
+> Documento de referencia técnica. Versión 1.1 — Mayo 2026.
 > Autores: Santiago (Arquitecto), Sofía (Estrategia de automatización).
 > Esta es la fuente de verdad para todas las decisiones técnicas futuras.
+
+## ⚡ Estado actual (resumen ejecutivo)
+
+| Capa | Implementado | Pendiente |
+|------|-------------|-----------|
+| Landing pública | ✅ Catálogo, guía de selección, contacto WA | — |
+| Panel admin | ✅ Productos, Vehículos, Vendedores, Clientes, Pedidos (read-only), Configuración | — |
+| Bot WhatsApp | ✅ Búsqueda + Guía + Ventas + Pedidos | ⏳ Testing end-to-end, FASE 3 (notificaciones) |
+| Supabase DB | ✅ 8 migraciones SQL aplicadas (productos, vendedores, vehículos, clientes, pedidos, sales) | — |
+| Automatizaciones n8n | ✅ WF-01 (nuevo producto), WF-02 (post semanal) | ⏳ WF-03 leads, WF-04 alertas, WF-05 fechas |
+
+**Comandos del bot disponibles**: `/catalogo`, `/buscar`, `/guia`, `/[ID]`,
+`/auto`/`moto`/`camion`/`otros`, `/destacados`, `/vender` (+ atajos +
+multi-venta), `/pedido` (+ atajos + alta de cliente on-the-fly),
+`/mispedidos`, `/ventas` (hoy/semana), `/ranking`, `/ayuda`, `/salir`.
 
 ---
 
@@ -51,9 +66,19 @@ CGS Paraguay es el sistema digital de un distribuidor oficial de lubricantes YPF
             │       SUPABASE               │
             │   PostgreSQL                 │
             │                              │
-            │   products  (RLS)            │
-            │   sales     (RLS)            │
+            │   products       (RLS)       │
+            │   vehicle_guide  (RLS)       │
+            │   vendedores     (RLS)       │
+            │   clientes       (RLS)       │
+            │   pedidos        (RLS)       │
+            │   pedido_items   (RLS)       │
+            │   sales          (RLS)       │
             │   auth.users                 │
+            │                              │
+            │   Extensions: pg_trgm,       │
+            │               unaccent       │
+            │   RPCs: search_*_fuzzy,      │
+            │         crear_pedido         │
             │                              │
             │   Webhooks (INSERT/UPDATE)   │
             └──────────────┬───────────────┘
@@ -233,6 +258,94 @@ RLS: authenticated = ALL. Service_role bypasa RLS.
 
 Nota: el bot registra ventas con `service_role` key, por lo que no requiere sesión autenticada.
 
+**Tabla `vendedores`** (antes planificada como `sellers`)
+
+```sql
+CREATE TABLE vendedores (
+  telefono     TEXT PRIMARY KEY,             -- "595981234567" sin @
+  nombre       TEXT NOT NULL,
+  categorias   TEXT[] NOT NULL DEFAULT '{}', -- ['elaion','extravida','moto','otros']
+  ciudades     TEXT[] DEFAULT '{}',
+  activo       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+Allowlist del bot. La cache se refresca cada 5 minutos en el bot.
+`categorias` se usará para segmentar notificaciones de stock en FASE 3.
+
+**Tabla `vehicle_guide`** — Guía de qué lubricante usar por vehículo
+
+```sql
+CREATE TABLE vehicle_guide (
+  id                       SERIAL PRIMARY KEY,
+  brand                    TEXT NOT NULL,
+  model                    TEXT NOT NULL,
+  year_from                INT,
+  year_to                  INT,
+  engine_type              TEXT,     -- nafta/diesel/turbo/4t/2t/hibrido
+  recommended_product_id   INT REFERENCES products(id) ON DELETE SET NULL,
+  alternative_product_id   INT REFERENCES products(id) ON DELETE SET NULL,
+  notes                    TEXT,
+  search_terms             TEXT,     -- normalizado (trigger)
+  created_at               TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+Búsqueda fuzzy con índice GIN trigram. RPC: `search_vehicle_guide(q, year, max)`.
+Seed inicial: ~44 vehículos comunes del mercado paraguayo (`sql/seed-vehicle-guide.sql`).
+
+**Tabla `clientes`** — Clientes identificados por RUC
+
+```sql
+CREATE TABLE clientes (
+  ruc            TEXT PRIMARY KEY,    -- '80012345-1'
+  razon_social   TEXT NOT NULL,
+  ciudad         TEXT,
+  contacto       TEXT,
+  telefono       TEXT,
+  notas          TEXT,
+  search_terms   TEXT,                -- trigger
+  created_by     TEXT REFERENCES vendedores(telefono),
+  created_at     TIMESTAMPTZ DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+Búsqueda fuzzy con RPC `search_clientes_fuzzy(q, max)`.
+El bot crea clientes on-the-fly cuando el RUC ingresado no existe.
+
+**Tablas `pedidos` + `pedido_items`** — Ventas vinculadas a cliente
+
+```sql
+CREATE TABLE pedidos (
+  id                  BIGSERIAL PRIMARY KEY,
+  cliente_ruc         TEXT NOT NULL REFERENCES clientes(ruc),
+  vendedor_telefono   TEXT NOT NULL REFERENCES vendedores(telefono),
+  estado              TEXT NOT NULL DEFAULT 'confirmado'
+    CHECK (estado IN ('pendiente','confirmado','entregado','cancelado')),
+  notas               TEXT,
+  total_unidades      INT,
+  total_monto         NUMERIC(12,2),     -- nullable hasta que haya lista de precios
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  confirmed_at        TIMESTAMPTZ
+);
+
+CREATE TABLE pedido_items (
+  id              BIGSERIAL PRIMARY KEY,
+  pedido_id       BIGINT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
+  product_id      INT REFERENCES products(id) ON DELETE SET NULL,
+  product_name    TEXT NOT NULL,           -- snapshot
+  quantity        INT NOT NULL CHECK (quantity > 0),
+  unit_price      NUMERIC(12,2),
+  subtotal        NUMERIC(12,2)
+);
+```
+
+Vista `pedidos_resumen` para listados con joins. RPC `crear_pedido` transaccional:
+crea pedido + items en una sola operación con rollback si cualquier item falla.
+
 ### 3.2 Tablas planificadas (no implementadas)
 
 **Tabla `leads`** — Requerida por WF-03
@@ -241,37 +354,35 @@ Nota: el bot registra ventas con `service_role` key, por lo que no requiere sesi
 CREATE TABLE leads (
   id            BIGSERIAL PRIMARY KEY,
   name          TEXT,
-  phone         TEXT,                  -- número WA o tel
+  phone         TEXT,
   email         TEXT,
-  source        TEXT DEFAULT 'landing', -- 'landing' | 'whatsapp' | 'facebook' | 'instagram'
-  interest      TEXT,                   -- producto o categoría de interés
+  source        TEXT DEFAULT 'landing',
+  interest      TEXT,
   message       TEXT,
-  status        TEXT DEFAULT 'new'      -- 'new' | 'contacted' | 'converted' | 'lost'
+  status        TEXT DEFAULT 'new'
                 CHECK (status IN ('new', 'contacted', 'converted', 'lost')),
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
-Casos de uso: captura desde formulario de contacto en landing, desde bot WA (comando futuro `!consulta`), destino del WF-03 hacia Google Sheets.
+Casos de uso: captura desde formulario de contacto en landing, destino del
+WF-03 hacia Google Sheets.
 
-**Tabla `sellers`** — Requerida para multi-vendedor en el bot
+**Tabla `inventory`** — Requerida para FASE 3 (notificaciones de stock)
 
 ```sql
-CREATE TABLE sellers (
-  id            BIGSERIAL PRIMARY KEY,
-  wa_number     TEXT UNIQUE NOT NULL,   -- e.g. '595991234567'
-  name          TEXT NOT NULL,
-  role          TEXT DEFAULT 'seller'   -- 'seller' | 'admin'
-                CHECK (role IN ('seller', 'admin')),
-  active        BOOLEAN DEFAULT TRUE,
-  created_at    TIMESTAMPTZ DEFAULT NOW()
+CREATE TABLE inventory (
+  product_id     INT PRIMARY KEY REFERENCES products(id),
+  stock_units    INT NOT NULL DEFAULT 0,
+  min_threshold  INT NOT NULL DEFAULT 10,
+  last_alert_at  TIMESTAMPTZ,
+  updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
-Permite: atribuir ventas por vendedor, autorizar qué números pueden usar el bot, reportes de performance por vendedor.
-
-Cuando se implemente, el campo `registered_by` de la tabla `sales` apuntará al `wa_number` de esta tabla.
+Permite alertas proactivas vía Supabase Realtime cuando un producto cruza
+el umbral mínimo, segmentadas por categoría a los vendedores correspondientes.
 
 **Tabla `content_log`** — Para trazabilidad de publicaciones automáticas n8n
 
@@ -586,6 +697,80 @@ Formatear Post Semanal (Code node)
 3. Click en WhatsApp CTA → tracking manual en Google Sheets por equipo.
 
 **Recomendación Santiago:** Opción 1. Mantiene datos en Supabase (fuente de verdad única), permite análisis SQL futuro, y la exportación a Sheets es automática via n8n.
+
+### ADR-009: Búsqueda fuzzy en Postgres vía pg_trgm
+
+**Contexto:** El bot necesita encontrar productos a partir de queries con
+typos ("elaiom 5w30"), nombres parciales ("elaion"), o términos de vehículo
+("hilux"). La búsqueda exacta no alcanza.
+
+**Decisión:** Usar la extensión `pg_trgm` de Postgres (nativa en Supabase)
+con índice GIN. La RPC `search_products_fuzzy` tokeniza la query, busca cada
+token contra `search_terms` con `word_similarity()` + ILIKE substring, y
+agrega por número de tokens matcheados.
+
+**Por qué no Algolia/Meilisearch/Elasticsearch:**
+- Costo cero adicional (Postgres ya está).
+- 19 productos: cualquier solución es O(n) en la práctica.
+- Sin nueva infraestructura que mantener.
+
+**Consecuencias:**
+- (+) Sin dependencias externas, sin sincronización de índices.
+- (+) Performance fina (<10ms) con índice trigram.
+- (-) Limitado a similitud por trigrams: no entiende sinónimos
+  semánticos ("aceite" vs "lubricante" — resuelto vía stop-words).
+
+### ADR-010: Panel admin con auth dual (Supabase + fallback local)
+
+**Contexto:** El panel admin necesita autenticación. Tenemos dos opciones:
+backend (Netlify Functions con service_role) o frontend directo
+(anon key + Supabase Auth + RLS para `authenticated`).
+
+**Decisión:** Frontend directo con Supabase Auth, sin backend intermedio.
+Las tablas de admin tienen RLS permisiva para el rol `authenticated`. Para
+evitar que cualquiera se cree cuenta, el sign-up por email está
+deshabilitado en Supabase Auth dashboard — las cuentas de admin se crean
+manualmente desde el panel de Supabase.
+
+**Fallback local:** Cuando Supabase no está configurado (modo dev), el
+panel cae a credenciales hardcoded (`admin` / `cgs2024`) almacenadas en
+localStorage. En producción este fallback queda cerrado: si Supabase
+está configurado y las credenciales no validan, no se intenta el fallback.
+
+**Por qué no Netlify Functions:**
+- Cero dependencias agregadas (sin lambda runtime, sin secrets management
+  separado del frontend).
+- Lectura/escritura instantánea desde el browser (no hay roundtrip a
+  function).
+- RLS es robusto: la separación entre service_role (bot) y authenticated
+  (admin web) está clara.
+
+**Consecuencias:**
+- (+) Stack más simple, sin backend que mantener.
+- (+) El JWT de Supabase Auth viaja en cada request — auditable.
+- (-) Si hubiera múltiples admins con permisos distintos, RLS por rol se
+  vuelve complejo. Por ahora hay un solo admin, así que no aplica.
+- (-) Crítico mantener el sign-up deshabilitado en Supabase Auth.
+
+### ADR-011: Pairing code vs QR para vinculación de Baileys
+
+**Contexto:** Baileys soporta dos modos para vincular WhatsApp: QR
+(se imprime en terminal) o pairing code (un código de 8 chars que se
+ingresa manualmente en WhatsApp).
+
+**Decisión:** Usar pairing code en producción cuando hay `PHONE_NUMBER`
+configurado; QR como fallback para desarrollo local.
+
+**Por qué:**
+- El QR se imprime en logs de Railway pero es muy difícil escanearlo
+  desde la UI del dashboard (texto monoespaciado, refresca cada 20s).
+- El pairing code es texto plano legible, se copia y pega.
+- El código se regenera automáticamente cada 90s si no se vincula —
+  evita la frustración de "expiró antes de que lo ingresara".
+
+**Auto-recovery:** Si WhatsApp cierra la sesión (`DisconnectReason.loggedOut`),
+el bot limpia `auth_info/` automáticamente y reinicia el ciclo de
+vinculación. El admin solo tiene que ingresar el nuevo código.
 
 ---
 
