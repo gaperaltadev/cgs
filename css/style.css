@@ -510,3 +510,52 @@ body.admin-body { background: var(--gray-50); }
   .hero-actions .btn { width: 100%; justify-content: center; }
   .stats-overview { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ─── Admin panel — extensiones (vendedores/clientes/pedidos/vehiculos) ─── */
+
+/* Helper inline */
+.muted { color: var(--gray-500); font-size: .85rem; }
+
+/* Botón "Nuevo X" creado dinámicamente — usa los mismos estilos que btn-add */
+.btn-add-dynamic { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Inputs deshabilitados (RUC y teléfono en edit) */
+.form-input:disabled { background: var(--gray-100); color: var(--gray-500); cursor: not-allowed; }
+
+/* Filtros adicionales en topbar de pedidos */
+.table-controls .form-select { padding: 8px 12px; height: auto; font-size: .85rem; }
+
+/* Detalle de pedido — definition list */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px 16px;
+  margin: 0;
+  padding: 16px;
+  background: var(--gray-50, #F9FAFB);
+  border-radius: var(--r-md);
+}
+.detail-grid dt {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--gray-500);
+  padding-top: 2px;
+}
+.detail-grid dd {
+  margin: 0;
+  font-size: .9rem;
+  color: var(--gray-900, #111827);
+  line-height: 1.5;
+}
+.detail-grid dd code {
+  background: var(--gray-100);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: .8rem;
+}
+
+/* Tabla de items en el modal de detalle */
+.detail-items-table { font-size: .88rem; }
+.detail-items-table thead th { text-transform: uppercase; letter-spacing: .04em; }

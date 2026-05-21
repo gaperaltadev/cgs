@@ -57,6 +57,24 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
         Productos
       </button>
+      <button class="sidebar-link" data-tab="tab-vehiculos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M5 17h14M5 17v-3.6l2-5.4h10l2 5.4V17M5 17v2h2v-2M19 17v2h-2v-2"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/></svg>
+        Guía de Vehículos
+      </button>
+
+      <p class="sidebar-section">Operaciones</p>
+      <button class="sidebar-link" data-tab="tab-vendedores">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Vendedores
+      </button>
+      <button class="sidebar-link" data-tab="tab-clientes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        Clientes
+      </button>
+      <button class="sidebar-link" data-tab="tab-pedidos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Pedidos
+      </button>
 
       <p class="sidebar-section">Sistema</p>
       <button class="sidebar-link" data-tab="tab-settings">
@@ -151,6 +169,125 @@
             </thead>
             <tbody id="products-tbody">
               <tr><td colspan="6" class="table-empty">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab: Vehículos ── -->
+      <div id="tab-vehiculos" class="tab-pane hidden">
+        <div class="table-controls">
+          <div class="table-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="vehiculos-search" placeholder="Buscar por marca, modelo…">
+          </div>
+          <span id="vehiculos-count"></span>
+        </div>
+        <div class="products-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Marca · Modelo</th>
+                <th>Años</th>
+                <th>Motor</th>
+                <th>Recomendado</th>
+                <th>Alternativa</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="vehiculos-tbody">
+              <tr><td colspan="6" class="table-empty">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab: Vendedores ── -->
+      <div id="tab-vendedores" class="tab-pane hidden">
+        <div class="table-controls">
+          <div class="table-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="vendedores-search" placeholder="Buscar por nombre o teléfono…">
+          </div>
+          <span id="vendedores-count"></span>
+        </div>
+        <div class="products-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Teléfono</th>
+                <th>Nombre</th>
+                <th>Categorías</th>
+                <th>Ciudades</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="vendedores-tbody">
+              <tr><td colspan="6" class="table-empty">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab: Clientes ── -->
+      <div id="tab-clientes" class="tab-pane hidden">
+        <div class="table-controls">
+          <div class="table-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="clientes-search" placeholder="Buscar por RUC, razón social o ciudad…">
+          </div>
+          <span id="clientes-count"></span>
+        </div>
+        <div class="products-table">
+          <table>
+            <thead>
+              <tr>
+                <th>RUC</th>
+                <th>Razón social</th>
+                <th>Ciudad</th>
+                <th>Contacto</th>
+                <th>Alta</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="clientes-tbody">
+              <tr><td colspan="6" class="table-empty">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab: Pedidos ── -->
+      <div id="tab-pedidos" class="tab-pane hidden">
+        <div class="table-controls" style="flex-wrap:wrap;gap:8px;">
+          <div class="table-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="pedidos-search" placeholder="Buscar cliente, RUC o vendedor…">
+          </div>
+          <select id="pedidos-periodo" class="form-input form-select" style="max-width:180px;">
+            <option value="hoy">Hoy</option>
+            <option value="semana" selected>Últimos 7 días</option>
+            <option value="mes">Último mes</option>
+            <option value="todo">Todo</option>
+          </select>
+          <span id="pedidos-count"></span>
+        </div>
+        <div class="products-table">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Vendedor</th>
+                <th>Items · Unidades</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="pedidos-tbody">
+              <tr><td colspan="7" class="table-empty">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -298,6 +435,194 @@
   </div>
 </div>
 
+<!-- ═══════════════════ VEHICULO FORM MODAL ═══════════════════ -->
+<div id="vehiculo-modal" class="form-modal hidden">
+  <div class="modal-backdrop" data-close="vehiculo-modal" style="position:absolute;inset:0;"></div>
+  <div class="form-modal-card" style="position:relative;z-index:1;">
+    <div class="form-modal-header">
+      <h3 id="vehiculo-modal-title">Nuevo vehículo</h3>
+      <button class="modal-close" data-close="vehiculo-modal">&times;</button>
+    </div>
+    <div class="form-modal-body">
+      <form id="vehiculo-form">
+        <input type="hidden" id="vehiculo-form-id">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="vehiculo-brand">Marca *</label>
+            <input type="text" id="vehiculo-brand" class="form-input" placeholder="Toyota" required>
+          </div>
+          <div class="form-group">
+            <label for="vehiculo-model">Modelo *</label>
+            <input type="text" id="vehiculo-model" class="form-input" placeholder="Corolla" required>
+          </div>
+          <div class="form-group">
+            <label for="vehiculo-year-from">Año desde</label>
+            <input type="number" id="vehiculo-year-from" class="form-input" placeholder="2014" min="1950" max="2099">
+          </div>
+          <div class="form-group">
+            <label for="vehiculo-year-to">Año hasta</label>
+            <input type="number" id="vehiculo-year-to" class="form-input" placeholder="2019" min="1950" max="2099">
+          </div>
+          <div class="form-group">
+            <label for="vehiculo-engine">Tipo de motor</label>
+            <select id="vehiculo-engine" class="form-input form-select">
+              <option value="">(no especificar)</option>
+              <option value="nafta">Nafta</option>
+              <option value="diesel">Diesel</option>
+              <option value="turbo">Turbo</option>
+              <option value="hibrido">Híbrido</option>
+              <option value="4t">Moto 4T</option>
+              <option value="2t">Moto 2T</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="vehiculo-recommended">Producto recomendado *</label>
+            <select id="vehiculo-recommended" class="form-input form-select" required></select>
+          </div>
+          <div class="form-group">
+            <label for="vehiculo-alternative">Alternativa (opcional)</label>
+            <select id="vehiculo-alternative" class="form-input form-select"></select>
+          </div>
+          <div class="full">
+            <div class="form-group">
+              <label for="vehiculo-notes">Notas técnicas</label>
+              <input type="text" id="vehiculo-notes" class="form-input" placeholder="Motor 1.8L 2ZR-FE">
+            </div>
+          </div>
+        </div>
+        <p id="vehiculo-form-error" class="form-error"></p>
+      </form>
+    </div>
+    <div class="form-modal-footer">
+      <button type="button" class="btn-cancel" data-close="vehiculo-modal">Cancelar</button>
+      <button type="submit" form="vehiculo-form" class="btn-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ VENDEDOR FORM MODAL ═══════════════════ -->
+<div id="vendedor-modal" class="form-modal hidden">
+  <div class="modal-backdrop" data-close="vendedor-modal" style="position:absolute;inset:0;"></div>
+  <div class="form-modal-card" style="position:relative;z-index:1;">
+    <div class="form-modal-header">
+      <h3 id="vendedor-modal-title">Nuevo vendedor</h3>
+      <button class="modal-close" data-close="vendedor-modal">&times;</button>
+    </div>
+    <div class="form-modal-body">
+      <form id="vendedor-form">
+        <input type="hidden" id="vendedor-form-original-telefono">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="vendedor-telefono">Teléfono *</label>
+            <input type="text" id="vendedor-telefono" class="form-input" placeholder="595981234567" required pattern="\d{10,15}" maxlength="15">
+            <p style="font-size:.78rem;color:#9CA3AF;margin-top:4px;">Formato internacional, solo dígitos. Ej: 595981234567</p>
+          </div>
+          <div class="form-group">
+            <label for="vendedor-nombre">Nombre *</label>
+            <input type="text" id="vendedor-nombre" class="form-input" placeholder="Juan Pérez" required>
+          </div>
+          <div class="full">
+            <div class="form-group">
+              <label>Categorías que vende</label>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;padding-top:4px;">
+                <label class="form-check"><input type="checkbox" name="vendedor-cat" value="elaion"> ELAION</label>
+                <label class="form-check"><input type="checkbox" name="vendedor-cat" value="extravida"> EXTRAVIDA</label>
+                <label class="form-check"><input type="checkbox" name="vendedor-cat" value="moto"> RÖD (Motos)</label>
+                <label class="form-check"><input type="checkbox" name="vendedor-cat" value="otros"> Otros</label>
+              </div>
+            </div>
+          </div>
+          <div class="full">
+            <div class="form-group">
+              <label for="vendedor-ciudades">Ciudades (separadas por coma)</label>
+              <input type="text" id="vendedor-ciudades" class="form-input" placeholder="Asunción, San Lorenzo">
+            </div>
+          </div>
+          <div class="full">
+            <div class="form-group">
+              <div class="form-check">
+                <input type="checkbox" id="vendedor-activo" checked>
+                <label for="vendedor-activo">Vendedor activo (puede usar el bot)</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p id="vendedor-form-error" class="form-error"></p>
+      </form>
+    </div>
+    <div class="form-modal-footer">
+      <button type="button" class="btn-cancel" data-close="vendedor-modal">Cancelar</button>
+      <button type="submit" form="vendedor-form" class="btn-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CLIENTE FORM MODAL ═══════════════════ -->
+<div id="cliente-modal" class="form-modal hidden">
+  <div class="modal-backdrop" data-close="cliente-modal" style="position:absolute;inset:0;"></div>
+  <div class="form-modal-card" style="position:relative;z-index:1;">
+    <div class="form-modal-header">
+      <h3 id="cliente-modal-title">Nuevo cliente</h3>
+      <button class="modal-close" data-close="cliente-modal">&times;</button>
+    </div>
+    <div class="form-modal-body">
+      <form id="cliente-form">
+        <input type="hidden" id="cliente-form-original-ruc">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="cliente-ruc">RUC *</label>
+            <input type="text" id="cliente-ruc" class="form-input" placeholder="80012345-1" required>
+          </div>
+          <div class="form-group">
+            <label for="cliente-razon">Razón social *</label>
+            <input type="text" id="cliente-razon" class="form-input" placeholder="AUTOREPUESTOS SAN LORENZO SRL" required>
+          </div>
+          <div class="form-group">
+            <label for="cliente-ciudad">Ciudad</label>
+            <input type="text" id="cliente-ciudad" class="form-input" placeholder="San Lorenzo">
+          </div>
+          <div class="form-group">
+            <label for="cliente-contacto">Contacto (persona)</label>
+            <input type="text" id="cliente-contacto" class="form-input" placeholder="Juan Pérez">
+          </div>
+          <div class="form-group">
+            <label for="cliente-telefono">Teléfono</label>
+            <input type="text" id="cliente-telefono" class="form-input" placeholder="021 123456">
+          </div>
+          <div class="full">
+            <div class="form-group">
+              <label for="cliente-notas">Notas</label>
+              <textarea id="cliente-notas" class="form-input form-textarea" placeholder="Notas internas, días de visita, etc."></textarea>
+            </div>
+          </div>
+        </div>
+        <p id="cliente-form-error" class="form-error"></p>
+      </form>
+    </div>
+    <div class="form-modal-footer">
+      <button type="button" class="btn-cancel" data-close="cliente-modal">Cancelar</button>
+      <button type="submit" form="cliente-form" class="btn-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PEDIDO DETALLE MODAL ═══════════════════ -->
+<div id="pedido-detalle-modal" class="form-modal hidden">
+  <div class="modal-backdrop" data-close="pedido-detalle-modal" style="position:absolute;inset:0;"></div>
+  <div class="form-modal-card" style="position:relative;z-index:1;max-width:600px;">
+    <div class="form-modal-header">
+      <h3 id="pedido-detalle-title">Pedido</h3>
+      <button class="modal-close" data-close="pedido-detalle-modal">&times;</button>
+    </div>
+    <div class="form-modal-body" id="pedido-detalle-body">
+      Cargando…
+    </div>
+    <div class="form-modal-footer">
+      <button type="button" class="btn-cancel" data-close="pedido-detalle-modal">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════ CONFIRM DELETE MODAL ═══════════════════ -->
 <div id="confirm-modal" class="confirm-modal hidden">
   <div class="confirm-card">
@@ -317,6 +642,10 @@
 <script src="js/supabase-config.js"></script>
 <script src="js/data.js"></script>
 <script src="js/admin.js"></script>
+<script src="js/admin-vehiculos.js"></script>
+<script src="js/admin-vendedores.js"></script>
+<script src="js/admin-clientes.js"></script>
+<script src="js/admin-pedidos.js"></script>
 <script>
   // Wire up the second cancel button
   document.getElementById('cancel-btn-foot')?.addEventListener('click', () => {

@@ -1,5 +1,17 @@
 'use strict';
 
+// Cliente Supabase compartido entre módulos del admin.
+// Los módulos lo consumen via `window.adminDb`.
+(function initSharedSupabase() {
+  const url  = window.SUPABASE_URL  || '';
+  const anon = window.SUPABASE_ANON || '';
+  if (url && anon && typeof window.supabase !== 'undefined') {
+    window.adminDb = window.supabase.createClient(url, anon);
+  } else {
+    window.adminDb = null;
+  }
+})();
+
 const ADMIN_CREDS_KEY  = 'cgs_admin_creds';
 const ADMIN_SESSION    = 'cgs_admin_session';
 const CGS_CONFIG_KEY   = 'cgs_config';
@@ -360,19 +372,92 @@ function setupWhatsAppConfig() {
   });
 }
 
-/* ─── Tab switching ──────────────────────────────── */
+/* ─── Tab switching (con lazy-init de cada módulo) ─── */
+const TAB_TITLES = {
+  'tab-products':   'Gestión de Productos',
+  'tab-vehiculos':  'Guía de Vehículos',
+  'tab-vendedores': 'Vendedores',
+  'tab-clientes':   'Clientes',
+  'tab-pedidos':    'Pedidos',
+  'tab-settings':   'Configuración'
+};
+
+const _initializedTabs = new Set(['tab-products']);  // products ya inicializa solo
+
+function switchTab(tabId) {
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+  document.querySelector(`.sidebar-link[data-tab="${tabId}"]`)?.classList.add('active');
+  document.getElementById(tabId)?.classList.remove('hidden');
+
+  // Actualizar título topbar y botones contextuales
+  const titleEl = document.getElementById('topbar-title');
+  if (titleEl) titleEl.textContent = TAB_TITLES[tabId] || '';
+  updateTopbarActions(tabId);
+
+  // Lazy init la primera vez que se entra
+  if (!_initializedTabs.has(tabId)) {
+    _initializedTabs.add(tabId);
+    if (tabId === 'tab-vehiculos'  && window.AdminVehiculos)  window.AdminVehiculos.init();
+    if (tabId === 'tab-vendedores' && window.AdminVendedores) window.AdminVendedores.init();
+    if (tabId === 'tab-clientes'   && window.AdminClientes)   window.AdminClientes.init();
+    if (tabId === 'tab-pedidos'    && window.AdminPedidos)    window.AdminPedidos.init();
+  } else {
+    // Refrescar al volver
+    if (tabId === 'tab-vehiculos'  && window.AdminVehiculos)  window.AdminVehiculos.refresh?.();
+    if (tabId === 'tab-vendedores' && window.AdminVendedores) window.AdminVendedores.refresh?.();
+    if (tabId === 'tab-clientes'   && window.AdminClientes)   window.AdminClientes.refresh?.();
+    if (tabId === 'tab-pedidos'    && window.AdminPedidos)    window.AdminPedidos.refresh?.();
+  }
+}
+
+function updateTopbarActions(tabId) {
+  const actions = document.querySelector('.topbar-actions');
+  if (!actions) return;
+  // Mostrar/ocultar botón nuevo según tab
+  const buttonsByTab = {
+    'tab-products':   { text: 'Nuevo Producto',  id: 'add-product-btn',   handler: null },
+    'tab-vehiculos':  { text: 'Nuevo vehículo',  id: 'add-vehiculo-btn',  handler: () => window.AdminVehiculos?.openAdd() },
+    'tab-vendedores': { text: 'Nuevo vendedor',  id: 'add-vendedor-btn',  handler: () => window.AdminVendedores?.openAdd() },
+    'tab-clientes':   { text: 'Nuevo cliente',   id: 'add-cliente-btn',   handler: () => window.AdminClientes?.openAdd() }
+  };
+  actions.querySelectorAll('.btn-add-dynamic').forEach(el => el.remove());
+
+  const cfg = buttonsByTab[tabId];
+  // Mostrar el botón original "Nuevo Producto" solo en tab-products
+  const origBtn = document.getElementById('add-product-btn');
+  if (origBtn) origBtn.style.display = (tabId === 'tab-products') ? '' : 'none';
+  const resetBtn = document.getElementById('reset-btn');
+  if (resetBtn) resetBtn.style.display = (tabId === 'tab-products') ? '' : 'none';
+
+  if (cfg && cfg.handler) {
+    const btn = document.createElement('button');
+    btn.className = 'btn-add btn-add-dynamic';
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ${cfg.text}`;
+    btn.addEventListener('click', cfg.handler);
+    actions.appendChild(btn);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.sidebar-link').forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
-      document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-      document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
-      link.classList.add('active');
-      const pane = document.getElementById(link.dataset.tab);
-      if (pane) pane.classList.remove('hidden');
+      if (link.dataset.tab) switchTab(link.dataset.tab);
+    });
+  });
+
+  // Cierre genérico de modales por data-close
+  document.querySelectorAll('[data-close]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.getAttribute('data-close');
+      document.getElementById(id)?.classList.add('hidden');
     });
   });
 });
+
+// Helper global para mostrar toasts desde otros módulos
+window.cgsToast = showToast;
 
 /* ─── Toast notifications ────────────────────────── */
 function showToast(message, type = 'success') {
