@@ -38,20 +38,25 @@
     render();
   }
 
+  function norm(s) {
+    return String(s ?? '').toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
   // ─── Render principal ────────────────────────────────────────────────────
   function render() {
     const tbody = document.getElementById('pres-tbody');
     if (!tbody) return;
 
-    const term = _search.toLowerCase();
+    const term = norm(_search);
     let filtered = _filterId
       ? _rows.filter(r => String(r.product_id) === _filterId)
       : _rows;
 
     if (term) {
       filtered = filtered.filter(r =>
-        (r.label              || '').toLowerCase().includes(term) ||
-        (r.products?.name     || '').toLowerCase().includes(term)
+        norm(r.label).includes(term) ||
+        norm(r.products?.name).includes(term)
       );
     }
 
