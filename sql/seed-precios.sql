@@ -58,9 +58,9 @@ UPDATE product_presentations pp
 SET
   price_usd  = m.precio,
   updated_at = now()
-FROM matriz m
-JOIN products pr ON pr.id = pp.product_id
-WHERE pr.name  ILIKE m.patron
+FROM matriz m, products pr
+WHERE pr.id    =      pp.product_id
+  AND pr.name  ILIKE  m.patron
   AND pp.label =      m.label
   AND pp.price_usd = 0          -- no pisar precios ya cargados
   AND m.precio > 0;
