@@ -61,6 +61,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M5 17h14M5 17v-3.6l2-5.4h10l2 5.4V17M5 17v2h2v-2M19 17v2h-2v-2"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/></svg>
         Guía de Vehículos
       </button>
+      <button class="sidebar-link" data-tab="tab-precios">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        Precios
+      </button>
 
       <p class="sidebar-section">Operaciones</p>
       <button class="sidebar-link" data-tab="tab-vendedores">
@@ -168,6 +172,37 @@
               </tr>
             </thead>
             <tbody id="products-tbody">
+              <tr><td colspan="6" class="table-empty">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab: Precios ── -->
+      <div id="tab-precios" class="tab-pane hidden">
+        <div class="table-controls" style="flex-wrap:wrap;gap:8px;">
+          <div class="table-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="pres-search" placeholder="Buscar por producto o presentación…">
+          </div>
+          <select id="pres-filter-product" class="form-input form-select" style="max-width:240px;">
+            <option value="">Todos los productos</option>
+          </select>
+          <span id="pres-count"></span>
+        </div>
+        <div class="products-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Presentación</th>
+                <th>Precio USD</th>
+                <th>Estado</th>
+                <th style="text-align:center;">Orden</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="pres-tbody">
               <tr><td colspan="6" class="table-empty">Cargando…</td></tr>
             </tbody>
           </table>
@@ -623,6 +658,61 @@
   </div>
 </div>
 
+<!-- ═══════════════════ PRESENTACION FORM MODAL ═══════════════════ -->
+<div id="pres-modal" class="form-modal hidden">
+  <div class="modal-backdrop" data-close="pres-modal" style="position:absolute;inset:0;"></div>
+  <div class="form-modal-card" style="position:relative;z-index:1;max-width:480px;">
+    <div class="form-modal-header">
+      <h3 id="pres-modal-title">Nueva presentación</h3>
+      <button class="modal-close" data-close="pres-modal">&times;</button>
+    </div>
+    <div class="form-modal-body">
+      <form id="pres-form">
+        <input type="hidden" id="pres-form-id">
+        <div class="form-grid">
+          <div class="full">
+            <div class="form-group">
+              <label for="pres-product-id">Producto *</label>
+              <select id="pres-product-id" class="form-input form-select" required>
+                <option value="">— Seleccioná un producto —</option>
+              </select>
+            </div>
+          </div>
+          <div class="full">
+            <div class="form-group">
+              <label for="pres-label">Presentación *</label>
+              <input type="text" id="pres-label" class="form-input" placeholder="Ej: Balde 20L, Bidón 4L, Litro" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="pres-price-usd">Precio USD</label>
+            <input type="number" id="pres-price-usd" class="form-input" placeholder="0.00" min="0" step="0.01">
+            <p style="font-size:.78rem;color:#9CA3AF;margin-top:4px;">Dejá vacío si aún no tiene precio cargado.</p>
+          </div>
+          <div class="form-group">
+            <label for="pres-sort-order">Orden</label>
+            <input type="number" id="pres-sort-order" class="form-input" placeholder="0" min="0" step="1">
+            <p style="font-size:.78rem;color:#9CA3AF;margin-top:4px;">Menor número aparece primero en el bot.</p>
+          </div>
+          <div class="full">
+            <div class="form-group">
+              <div class="form-check">
+                <input type="checkbox" id="pres-active" checked>
+                <label for="pres-active">Presentación activa (visible en el bot)</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p id="pres-form-error" class="form-error"></p>
+      </form>
+    </div>
+    <div class="form-modal-footer">
+      <button type="button" class="btn-cancel" data-close="pres-modal">Cancelar</button>
+      <button type="submit" form="pres-form" class="btn-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════ CONFIRM DELETE MODAL ═══════════════════ -->
 <div id="confirm-modal" class="confirm-modal hidden">
   <div class="confirm-card">
@@ -646,6 +736,7 @@
 <script src="js/admin-vendedores.js"></script>
 <script src="js/admin-clientes.js"></script>
 <script src="js/admin-pedidos.js"></script>
+<script src="js/admin-presentaciones.js"></script>
 <script>
   // Wire up the second cancel button
   document.getElementById('cancel-btn-foot')?.addEventListener('click', () => {

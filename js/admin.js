@@ -388,6 +388,7 @@ function setupWhatsAppConfig() {
 const TAB_TITLES = {
   'tab-products':   'Gestión de Productos',
   'tab-vehiculos':  'Guía de Vehículos',
+  'tab-precios':    'Precios por Presentación',
   'tab-vendedores': 'Vendedores',
   'tab-clientes':   'Clientes',
   'tab-pedidos':    'Pedidos',
@@ -410,16 +411,18 @@ function switchTab(tabId) {
   // Lazy init la primera vez que se entra
   if (!_initializedTabs.has(tabId)) {
     _initializedTabs.add(tabId);
-    if (tabId === 'tab-vehiculos'  && window.AdminVehiculos)  window.AdminVehiculos.init();
-    if (tabId === 'tab-vendedores' && window.AdminVendedores) window.AdminVendedores.init();
-    if (tabId === 'tab-clientes'   && window.AdminClientes)   window.AdminClientes.init();
-    if (tabId === 'tab-pedidos'    && window.AdminPedidos)    window.AdminPedidos.init();
+    if (tabId === 'tab-vehiculos'      && window.AdminVehiculos)      window.AdminVehiculos.init();
+    if (tabId === 'tab-precios'        && window.AdminPresentaciones) window.AdminPresentaciones.init();
+    if (tabId === 'tab-vendedores'     && window.AdminVendedores)     window.AdminVendedores.init();
+    if (tabId === 'tab-clientes'       && window.AdminClientes)       window.AdminClientes.init();
+    if (tabId === 'tab-pedidos'        && window.AdminPedidos)        window.AdminPedidos.init();
   } else {
     // Refrescar al volver
-    if (tabId === 'tab-vehiculos'  && window.AdminVehiculos)  window.AdminVehiculos.refresh?.();
-    if (tabId === 'tab-vendedores' && window.AdminVendedores) window.AdminVendedores.refresh?.();
-    if (tabId === 'tab-clientes'   && window.AdminClientes)   window.AdminClientes.refresh?.();
-    if (tabId === 'tab-pedidos'    && window.AdminPedidos)    window.AdminPedidos.refresh?.();
+    if (tabId === 'tab-vehiculos'      && window.AdminVehiculos)      window.AdminVehiculos.refresh?.();
+    if (tabId === 'tab-precios'        && window.AdminPresentaciones) window.AdminPresentaciones.refresh?.();
+    if (tabId === 'tab-vendedores'     && window.AdminVendedores)     window.AdminVendedores.refresh?.();
+    if (tabId === 'tab-clientes'       && window.AdminClientes)       window.AdminClientes.refresh?.();
+    if (tabId === 'tab-pedidos'        && window.AdminPedidos)        window.AdminPedidos.refresh?.();
   }
 }
 
@@ -428,10 +431,11 @@ function updateTopbarActions(tabId) {
   if (!actions) return;
   // Mostrar/ocultar botón nuevo según tab
   const buttonsByTab = {
-    'tab-products':   { text: 'Nuevo Producto',  id: 'add-product-btn',   handler: null },
-    'tab-vehiculos':  { text: 'Nuevo vehículo',  id: 'add-vehiculo-btn',  handler: () => window.AdminVehiculos?.openAdd() },
-    'tab-vendedores': { text: 'Nuevo vendedor',  id: 'add-vendedor-btn',  handler: () => window.AdminVendedores?.openAdd() },
-    'tab-clientes':   { text: 'Nuevo cliente',   id: 'add-cliente-btn',   handler: () => window.AdminClientes?.openAdd() }
+    'tab-products':   { text: 'Nuevo Producto',       id: 'add-product-btn',   handler: null },
+    'tab-vehiculos':  { text: 'Nuevo vehículo',       id: 'add-vehiculo-btn',  handler: () => window.AdminVehiculos?.openAdd() },
+    'tab-precios':    { text: 'Nueva presentación',   id: 'add-pres-btn',      handler: () => window.AdminPresentaciones?.openAdd() },
+    'tab-vendedores': { text: 'Nuevo vendedor',       id: 'add-vendedor-btn',  handler: () => window.AdminVendedores?.openAdd() },
+    'tab-clientes':   { text: 'Nuevo cliente',        id: 'add-cliente-btn',   handler: () => window.AdminClientes?.openAdd() }
   };
   actions.querySelectorAll('.btn-add-dynamic').forEach(el => el.remove());
 
